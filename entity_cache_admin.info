@@ -1,0 +1,4 @@
+name = Entity Cache Administation
+description = Provides an administrative interface for fine-grained control of entity caching.
+backdrop = 1.x
+type = module

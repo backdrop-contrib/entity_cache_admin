@@ -1,0 +1,100 @@
+<?php
+/**
+ * @file
+ * Provides an administrative interface for selectively disabling caching for
+ * selected entity/bundle combinations.
+ */
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function entity_cache_admin_form_system_performance_settings_alter(&$form, &$form_state, $form_id) {
+  $form['clear_cache']['#weight'] = 0;
+  $form['caching']['#title'] = t('Page caching');
+  $form['caching']['#weight'] = 1;
+
+  $config = config('entity_cache_admin.settings');
+  $form['entity_cache'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Entity caching'),
+    '#weight' => 2,
+  );
+  $form['entity_cache'][] = array(
+    '#type' => 'help',
+    '#markup' => t('All entities are cached by default. Uncheck any entity/bundle combination to disable its caching. (Note that other modules can also disable caching for selected entities beyond what is chosen here.)'),
+  );
+  $entity_info = entity_get_info();
+  foreach ($entity_info as $entity_type => $info) {
+    $form['entity_cache'][$entity_type] = array(
+      '#type' => 'fieldset',
+      '#title' => $info['label'],
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $bundles = isset($info['bundles']) ? $info['bundles'] : array($entity_type => array('label' => $entity_type['label']));
+    foreach ($bundles as $bundle_name => $bundle) {
+      $entity_bundle_key = $entity_type . ':' . $bundle_name;
+      $default_value = $config->get($entity_bundle_key);
+      if (is_null($default_value)) {
+        // New entity/bundles (e.g., from newly added modules, so not yet stored
+        // in config) should be checked by default.
+        $default_value = TRUE;
+      }
+      $form['entity_cache'][$entity_type][$entity_bundle_key] = array(
+        '#type' => 'checkbox',
+        '#title' => $bundle['label'],
+        '#default_value' => $default_value,
+        '#config' => 'entity_cache_admin.settings',
+      );
+    }
+  }
+  $form['bandwidth_optimization']['#weight'] = 3;
+}
+
+/**
+ * Implements hook_entity_cache_alter().
+ */
+function entity_cache_admin_entity_cache_alter(&$entity, &$cache_item) {
+  if (!$cache_item) {
+    return;
+  }
+  $entity_class = get_class($entity);
+  $entity_type = NULL;
+  foreach (entity_get_info() as $entity_info_type => $info) {
+    if ($info['entity class'] == $entity_class) {
+      $entity_type = $entity_info_type;
+      $entity_info = $info;
+      break;
+    }
+  }
+  if (!$entity_type) {
+    return;
+  }
+  if (!empty($entity_info['entity keys']['bundle'])) {
+    $bundle_property = $entity_info['entity keys']['bundle'];
+    $bundle_name = $entity->$bundle_property;
+  }
+  else {
+    $bundle_name = $entity_type;
+  }
+  $entity_bundle_key = $entity_type . ':' . $bundle_name;
+  $config_value = config_get('entity_cache_admin.settings', $entity_bundle_key);
+  if (is_null($config_value)) {
+    $config_value = TRUE;
+  }
+  $cache_item &= $config_value;
+
+  // For debugging/testing only; this will be removed before module release.
+  backdrop_set_message('Entity type ' . $entity_type . ', bundle ' . $bundle_name . ', caching allowed: ' . ($cache_item ? 'YES' : 'NO'), 'info');
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function entity_cache_admin_config_info() {
+  $prefixes['entity_cache_admin.settings'] = array(
+    'label' => t('Entity Cache UI settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
