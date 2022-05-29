@@ -57,11 +57,20 @@ function entity_cache_admin_entity_info_alter(&$entity_info) {
   foreach ($entity_info as $entity_type => &$info) {
     foreach ($info['bundles'] as $bundle_name => &$bundle) {
       $entity_bundle_key = $entity_type . ':' . $bundle_name;
-      $do_cache = config_get('entity_cache_admin.settings', $entity_bundle_key);
-      if (is_null($do_cache)) {
-        $do_cache = TRUE;
+      $bundle_cache = config_get('entity_cache_admin.settings', $entity_bundle_key);
+      if (is_null($bundle_cache)) {
+        $bundle_cache = TRUE;
       }
-      $bundle['no cache'] = !$do_cache;
+      if (isset($bundle['bundle cache'])) {
+        // Other modules may have already set 'bundle cache' to FALSE; don't
+        // override that.
+        $bundle['bundle cache'] &= $bundle_cache;
+      }
+      elseif (!$bundle_cache) {
+        // Only need to set the flag if we're setting it to FALSE, since the
+        // default for an unset value is TRUE.
+        $bundle['bundle cache'] = $bundle_cache;
+      }
     }
   }
 }
