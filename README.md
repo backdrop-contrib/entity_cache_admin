@@ -2,7 +2,7 @@ Entity Cache Administration
 ======================
 
 Entity Cache Administration provides an interface that lets the site
-administrator select which entities should cached at the individual bundle
+administrator select which entities should be cached at the individual bundle
 level. For example, you can choose to cache some content (node) types but not
 others.
 
@@ -16,11 +16,13 @@ Installation
   the section "Entity Caching." All listed entities are persistently cached by
   default; uncheck any entity/bundle combinations to disable persistent caching
   for that entity/bundle.
+  
+Bundle-level entity caching was introduced in Backdrop 1.23.0. This module requires at least this version of Backdrop.
 
 Issues
 ------
 
-Bugs and feature requests should be reported in [the Issue Queue](https://github.com/backdrop-contrib/entity_cache_admin/issues).
+Bugs and feature requests should be reported in [the issue queue](https://github.com/backdrop-contrib/entity_cache_admin/issues).
 
 Current Maintainers
 -------------------
