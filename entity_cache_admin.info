@@ -4,3 +4,5 @@ backdrop = 1.x
 type = module
 
 dependencies[] = system (>= 1.23.0)
+
+configure = admin/config/development/performance
